@@ -1,0 +1,64 @@
+# Segment Anything Model (SAM) weights
+models/*.pth
+models/*.pt
+
+# Custom trained weights
+weights/*.pt
+weights/*.pth
+
+# Datasets & Imagery
+data/*.tif
+data/*.tiff
+data/pre-event/*
+data/post-event/*
+data/target/*
+!data/README.md
+
+# Pipeline Outputs
+outputs/*
+!outputs/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# VS Code / IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS Data
+.DS_Store
+Thumbs.db
