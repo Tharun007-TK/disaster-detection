@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gc
 import os
 import shutil
 import tempfile
@@ -8,7 +9,6 @@ from pathlib import Path
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
 import backend.state as state
-from ml.inference import run_inference, run_single_inference
 
 router = APIRouter()
 
@@ -21,6 +21,15 @@ def _validate(upload: UploadFile, label: str) -> None:
         raise HTTPException(400, f"{label} must be .tif/.tiff, got {ext!r}")
 
 
+def _ckpt_path() -> Path:
+    return Path(
+        os.environ.get(
+            "MODEL_WEIGHTS_PATH",
+            str(Path(__file__).resolve().parent.parent.parent / "ml" / "checkpoints" / "best.pth"),
+        )
+    )
+
+
 @router.post("/inference")
 async def do_inference(
     pre: UploadFile = File(..., description="Pre-event GeoTIFF (3-band RGB)"),
@@ -29,8 +38,14 @@ async def do_inference(
     _validate(pre, "pre")
     _validate(post, "post")
 
-    if state.model is None:
-        raise HTTPException(503, "Model not loaded")
+    # Lazy import keeps ml.inference (and its torch + rasterio import cost)
+    # out of FastAPI startup graph; only paid on first inference call.
+    from ml.inference import run_inference
+
+    try:
+        model, device = state.get_model()
+    except Exception as exc:
+        raise HTTPException(503, f"Model load failed: {exc}") from exc
 
     out_dir = Path(os.environ.get("OUTPUTS_DIR", "./outputs"))
 
@@ -46,13 +61,17 @@ async def do_inference(
             result = run_inference(
                 pre_path,
                 post_path,
-                ckpt_path=Path(os.environ.get("MODEL_WEIGHTS_PATH", "./ml/checkpoints/best.pth")),
+                ckpt_path=_ckpt_path(),
                 out_dir=out_dir,
-                model=state.model,
-                device=state.device,
+                model=model,
+                device=device,
             )
         except Exception as exc:
             raise HTTPException(500, f"Inference failed: {exc}") from exc
+        finally:
+            # Drop intermediate numpy/torch buffers held by run_inference's
+            # frame so peak RSS returns to baseline before the next request.
+            gc.collect()
 
     return result
 
@@ -62,8 +81,13 @@ async def do_single_inference(
     image: UploadFile = File(..., description="Single disaster GeoTIFF (any band count)"),
 ):
     _validate(image, "image")
-    if state.model is None:
-        raise HTTPException(503, "Model not loaded")
+
+    from ml.inference import run_single_inference
+
+    try:
+        model, device = state.get_model()
+    except Exception as exc:
+        raise HTTPException(503, f"Model load failed: {exc}") from exc
 
     out_dir = Path(os.environ.get("OUTPUTS_DIR", "./outputs"))
 
@@ -74,12 +98,14 @@ async def do_single_inference(
         try:
             result = run_single_inference(
                 img_path,
-                ckpt_path=Path(os.environ.get("MODEL_WEIGHTS_PATH", "./ml/checkpoints/best.pth")),
+                ckpt_path=_ckpt_path(),
                 out_dir=out_dir,
-                model=state.model,
-                device=state.device,
+                model=model,
+                device=device,
             )
         except Exception as exc:
             raise HTTPException(500, f"Inference failed: {exc}") from exc
+        finally:
+            gc.collect()
 
     return result

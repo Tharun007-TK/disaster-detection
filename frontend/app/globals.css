@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Flat dark surface — matches Tailwind zinc-950 / zinc-100 */
+  --background: #09090b;
+  --foreground: #f4f4f5;
 }
 
 @theme inline {
@@ -12,15 +13,71 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html,
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar — subtle, matches dark surface */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3f3f46 transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+
+/* Leaflet plays nicer with a dark base when tiles haven't loaded. */
+.leaflet-container {
+  background: #09090b !important;
+  font-family: inherit;
+}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: #18181b !important;
+  color: #e4e4e7 !important;
+  border: 1px solid #27272a;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+.leaflet-popup-content {
+  margin: 8px 12px !important;
+  font-size: 12px;
+}
+.leaflet-control-attribution {
+  background: rgba(24, 24, 27, 0.8) !important;
+  color: #a1a1aa !important;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+.leaflet-control-attribution a {
+  color: #60a5fa !important;
+}
+.leaflet-bar a,
+.leaflet-bar a:hover {
+  background-color: #18181b !important;
+  border-color: #27272a !important;
+  color: #e4e4e7 !important;
+}
+.leaflet-bar a:hover {
+  background-color: #27272a !important;
 }

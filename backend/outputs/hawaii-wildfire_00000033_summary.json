@@ -1,0 +1,27 @@
+{
+  "pre": "C:\\Users\\Admin\\AppData\\Local\\Temp\\tmpbhml_fjk\\hawaii-wildfire_00000033_pre_disaster.tif",
+  "post": "C:\\Users\\Admin\\AppData\\Local\\Temp\\tmpbhml_fjk\\hawaii-wildfire_00000033_post_disaster.tif",
+  "checkpoint": "ml\\checkpoints\\best.pth",
+  "num_classes": 4,
+  "height": 1024,
+  "width": 1024,
+  "crs": "EPSG:3857",
+  "bounds": {
+    "left": -17440699.271489363,
+    "bottom": 2377655.120995718,
+    "right": -17440313.366880435,
+    "top": 2378041.032960049
+  },
+  "pixel_counts": {
+    "No Damage": 885604,
+    "Minor": 5362,
+    "Major": 10,
+    "Destroyed": 157600
+  },
+  "damage_pct": {
+    "No Damage": 84.4578,
+    "Minor": 0.5114,
+    "Major": 0.001,
+    "Destroyed": 15.0299
+  }
+}

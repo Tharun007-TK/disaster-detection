@@ -1,13 +1,25 @@
-torch
-torchvision
+# DAMAGESCOPE backend — Render free tier (CPU-only, 512 MB RAM).
+#
+# Pin torch/torchvision to CPU-only wheels. The default torch wheel ships
+# with CUDA libs (~800 MB) which alone blows the 512 MB free-tier limit.
+# The +cpu wheels are ~150–200 MB.
+#
+# Versions match what the local dev env imports (torch 2.6.0 / torchvision
+# 0.21.0) so checkpoints load identically.
+#
+# Render build command: pip install -r requirements.txt
+
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+torch==2.6.0+cpu
+torchvision==0.21.0+cpu
+
 rasterio
-albumentations
 numpy
-matplotlib
-pandas
 Pillow
-tqdm
-scikit-learn
 fastapi
 uvicorn[standard]
 python-multipart
+
+# Training-only deps removed from runtime image (not imported by backend/
+# or ml/inference.py): albumentations, matplotlib, pandas, tqdm, scikit-learn.

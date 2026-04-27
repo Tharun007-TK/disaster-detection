@@ -87,24 +87,36 @@ def _read_image(path: Path) -> tuple[np.ndarray, dict]:
 def _load_pair(pre_path: Path, post_path: Path) -> tuple[torch.Tensor, torch.Tensor, dict, np.ndarray]:
     pre, meta = _read_image(pre_path)
     post, _ = _read_image(post_path)
-    post_orig = post.copy()
+    # Hold a reference to the original post array (uint8 from rasterio/PIL)
+    # for the overlay render. We do NOT make an explicit `.copy()` — the
+    # downstream normalisation creates a new array via `.astype`, so the
+    # original buffer stays alive only via this reference.
+    post_orig = post
 
-    # Normalise pre to 3 bands
+    # Normalise pre to 3 bands (still uint8 — float cast happens on tensor entry)
     if pre.shape[0] == 4:
         pre = pre[:3]
     elif pre.shape[0] == 1:
         pre = np.repeat(pre, 3, axis=0)
     elif pre.shape[0] != 3:
         raise ValueError(f"Pre image must have 1, 3, or 4 bands, got {pre.shape[0]}")
-    # Normalise post to 1 band
+    # Normalise post to 1 band — only here do we promote to float32 because
+    # `.mean()` requires it. Reassigning `post` releases the multiband buffer
+    # as soon as the new single-band float copy lands; `post_orig` keeps the
+    # uint8 multiband for overlay rendering.
     if post.shape[0] != 1:
         post = post.astype(np.float32).mean(axis=0, keepdims=True)
 
     if pre.shape[1:] != post.shape[1:]:
         raise ValueError(f"Pre/post spatial mismatch: pre={pre.shape[1:]} post={post.shape[1:]}")
 
-    pre_t = torch.from_numpy(pre.astype(np.float32) / 255.0).unsqueeze(0)
-    post_t = torch.from_numpy(post.astype(np.float32) / 255.0).unsqueeze(0)
+    # Float cast deferred to tensor construction. `from_numpy` shares memory
+    # with the numpy buffer, but `.astype(float32) / 255.0` allocates fresh.
+    pre_t = torch.from_numpy((pre.astype(np.float32) / 255.0)).unsqueeze(0)
+    if post.dtype == np.float32:
+        post_t = torch.from_numpy(post / 255.0).unsqueeze(0)
+    else:
+        post_t = torch.from_numpy(post.astype(np.float32) / 255.0).unsqueeze(0)
     return pre_t, post_t, meta, post_orig
 
 
@@ -126,22 +138,41 @@ def summarize(mask: np.ndarray) -> dict:
     return {"pixel_counts": counts, "damage_pct": pct}
 
 
-@torch.no_grad()
 def predict_mask(
     model: SiameseDamageNet,
     pre: torch.Tensor,
     post: torch.Tensor,
     device: torch.device,
 ) -> np.ndarray:
-    pre = pre.to(device)
-    post = post.to(device)
-    _, _, H, W = pre.shape
+    """Run a forward pass and return an HxW uint8 class-id mask.
 
-    pre_p, _ = _pad_to_multiple(pre, 32)
-    post_p, _ = _pad_to_multiple(post, 32)
-    logits = model(pre_p, post_p)
-    logits = logits[..., :H, :W]
-    pred = logits.argmax(dim=1)[0].to(torch.uint8).cpu().numpy()
+    Uses `torch.inference_mode()` (cheaper than `no_grad`: skips view tracking
+    and version-counter bumps) and explicitly frees intermediate tensors
+    before returning so peak RSS drops back to model+input footprint.
+    """
+    with torch.inference_mode():
+        pre = pre.to(device, dtype=torch.float32)
+        post = post.to(device, dtype=torch.float32)
+        _, _, H, W = pre.shape
+
+        pre_p, _ = _pad_to_multiple(pre, 32)
+        post_p, _ = _pad_to_multiple(post, 32)
+        # Free unpadded copies if padding made a new allocation.
+        if pre_p.data_ptr() != pre.data_ptr():
+            del pre
+        if post_p.data_ptr() != post.data_ptr():
+            del post
+
+        logits = model(pre_p, post_p)
+        del pre_p, post_p
+
+        # Crop pad, then collapse to argmax in uint8 immediately so the
+        # large float32 logits buffer can be released.
+        pred_t = logits[..., :H, :W].argmax(dim=1)[0].to(torch.uint8)
+        del logits
+
+        pred = pred_t.cpu().numpy()
+        del pred_t
     return pred
 
 
@@ -236,10 +267,14 @@ def run_inference(
 
 def _load_single(img_path: Path) -> tuple[torch.Tensor, torch.Tensor, dict, np.ndarray]:
     arr, meta = _read_image(img_path)
-    orig_arr = arr.copy()
-    arr = arr.astype(np.float32)
+    # Hold reference to the uint8 original for overlay rendering — no `.copy()`.
+    # The `.astype(float32)` below allocates a new buffer; the original stays
+    # alive via `orig_arr`.
+    orig_arr = arr
     H, W = arr.shape[1], arr.shape[2]
-    post_arr = arr.mean(axis=0, keepdims=True) / 255.0
+    # Single combined float promotion + scale + mean reduction in one chain
+    # so no intermediate full-size float32 multiband buffer is retained.
+    post_arr = (arr.astype(np.float32) / 255.0).mean(axis=0, keepdims=True)
     pre_arr = np.zeros((3, H, W), dtype=np.float32)
     pre_t = torch.from_numpy(pre_arr).unsqueeze(0)
     post_t = torch.from_numpy(post_arr).unsqueeze(0)

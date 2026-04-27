@@ -1,6 +1,13 @@
 """DAMAGESCOPE FastAPI backend.
 
 Run: uvicorn backend.main:app --reload --port 8000
+
+Memory note (Render free tier, 512 MB):
+The model is NOT loaded at startup. The first inference request triggers a
+lazy load via `backend.state.get_model()`. This avoids the cold-boot RAM
+spike (torch init + model weights + uvicorn worker baseline all at once)
+that was tripping Render's OOM killer.
+Set EAGER_MODEL_LOAD=1 in env to opt back into eager startup for local dev.
 """
 from __future__ import annotations
 
@@ -16,18 +23,17 @@ from fastapi.staticfiles import StaticFiles
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import backend.state as state
-from ml.inference import load_model
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    ckpt = Path(os.environ.get("MODEL_WEIGHTS_PATH", "D:\\Projects\\Disaster Damage Prediction\\Code\\v2\\ml\\checkpoints\\best.pth"))
-    print(f"loading model from {ckpt}")
-    state.model, state.device = load_model(ckpt)
-    print(f"model ready on {state.device}")
+    if os.environ.get("EAGER_MODEL_LOAD") == "1":
+        print("[lifespan] EAGER_MODEL_LOAD=1, warming model")
+        state.get_model()
+    else:
+        print("[lifespan] lazy model load enabled (first request will warm)")
     yield
-    state.model = None
-    state.device = None
+    state.release_model()
 
 
 app = FastAPI(title="DAMAGESCOPE", version="2.0.0", lifespan=lifespan)
