@@ -38,10 +38,19 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="DAMAGESCOPE", version="2.0.0", lifespan=lifespan)
 
+_cors_env = os.environ.get("CORS_ORIGINS", "").strip()
+if _cors_env:
+    _allow_origins = [o.strip() for o in _cors_env.split(",") if o.strip()]
+    _allow_credentials = True
+else:
+    _allow_origins = ["*"]
+    _allow_credentials = False
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=_allow_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_credentials=_allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
