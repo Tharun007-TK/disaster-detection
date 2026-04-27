@@ -58,6 +58,10 @@ def get_model() -> tuple[SiameseDamageNet, torch.device]:
     return model, device  # type: ignore[return-value]
 
 
+def is_loaded() -> bool:
+    return model is not None and device is not None
+
+
 def release_model() -> None:
     """Drop the cached model. Call from app shutdown."""
     global model, device

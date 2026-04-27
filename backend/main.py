@@ -57,3 +57,13 @@ from backend.routes import results as _res
 app.include_router(_inf.router, prefix="/api")
 app.include_router(_res.router, prefix="/api")
 app.include_router(_prec.router, prefix="/api")
+
+
+@app.get("/api/health")
+def health():
+    return {"status": "ok", "model_loaded": state.is_loaded()}
+
+
+@app.get("/")
+def root():
+    return {"service": "DAMAGESCOPE", "version": "2.0.0", "docs": "/docs"}
