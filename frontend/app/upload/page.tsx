@@ -185,7 +185,7 @@ export default function UploadPage() {
       }
       fd.append("pre", preFile);
       fd.append("post", postFile);
-      endpoint = "/api/inference";
+      endpoint = `${apiUrl}/api/inference`;
     } else {
       if (!singleFile) {
         setError("Select a disaster image.");
@@ -193,7 +193,7 @@ export default function UploadPage() {
         return;
       }
       fd.append("image", singleFile);
-      endpoint = "/api/inference/single";
+      endpoint = `${apiUrl}/api/inference/single`;
     }
 
     try {
