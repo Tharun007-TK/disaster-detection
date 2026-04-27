@@ -1,14 +1,20 @@
 from __future__ import annotations
 
+import asyncio
 import gc
+import logging
 import os
 import shutil
 import tempfile
+import traceback
 from pathlib import Path
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
 import backend.state as state
+
+log = logging.getLogger("damagescope.inference")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 
 router = APIRouter()
 
@@ -57,8 +63,12 @@ async def do_inference(
         with post_path.open("wb") as f:
             shutil.copyfileobj(post.file, f)
 
+        log.info("pair inference start: pre=%s (%d bytes) post=%s (%d bytes)",
+                 pre.filename, pre_path.stat().st_size,
+                 post.filename, post_path.stat().st_size)
         try:
-            result = run_inference(
+            result = await asyncio.to_thread(
+                run_inference,
                 pre_path,
                 post_path,
                 ckpt_path=_ckpt_path(),
@@ -67,12 +77,12 @@ async def do_inference(
                 device=device,
             )
         except Exception as exc:
-            raise HTTPException(500, f"Inference failed: {exc}") from exc
+            log.error("pair inference failed: %s\n%s", exc, traceback.format_exc())
+            raise HTTPException(500, f"Inference failed: {exc.__class__.__name__}: {exc}") from exc
         finally:
-            # Drop intermediate numpy/torch buffers held by run_inference's
-            # frame so peak RSS returns to baseline before the next request.
             gc.collect()
 
+    log.info("pair inference done: %s", result.get("id") if isinstance(result, dict) else "ok")
     return result
 
 
@@ -95,8 +105,11 @@ async def do_single_inference(
         img_path = Path(tmpdir) / (image.filename or "image.tif")
         with img_path.open("wb") as f:
             shutil.copyfileobj(image.file, f)
+        log.info("single inference start: image=%s (%d bytes)",
+                 image.filename, img_path.stat().st_size)
         try:
-            result = run_single_inference(
+            result = await asyncio.to_thread(
+                run_single_inference,
                 img_path,
                 ckpt_path=_ckpt_path(),
                 out_dir=out_dir,
@@ -104,8 +117,10 @@ async def do_single_inference(
                 device=device,
             )
         except Exception as exc:
-            raise HTTPException(500, f"Inference failed: {exc}") from exc
+            log.error("single inference failed: %s\n%s", exc, traceback.format_exc())
+            raise HTTPException(500, f"Inference failed: {exc.__class__.__name__}: {exc}") from exc
         finally:
             gc.collect()
 
+    log.info("single inference done: %s", result.get("id") if isinstance(result, dict) else "ok")
     return result
