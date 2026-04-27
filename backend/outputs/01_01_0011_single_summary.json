@@ -1,0 +1,27 @@
+{
+  "image": "C:\\Users\\Admin\\AppData\\Local\\Temp\\tmpm4vch0i2\\01_01_0011.png",
+  "mode": "single",
+  "checkpoint": "ml\\checkpoints\\best.pth",
+  "num_classes": 4,
+  "height": 183,
+  "width": 275,
+  "crs": null,
+  "bounds": {
+    "left": 0.0,
+    "bottom": 183.0,
+    "right": 275.0,
+    "top": 0.0
+  },
+  "pixel_counts": {
+    "No Damage": 50325,
+    "Minor": 0,
+    "Major": 0,
+    "Destroyed": 0
+  },
+  "damage_pct": {
+    "No Damage": 100.0,
+    "Minor": 0.0,
+    "Major": 0.0,
+    "Destroyed": 0.0
+  }
+}

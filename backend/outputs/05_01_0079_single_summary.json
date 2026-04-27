@@ -1,0 +1,27 @@
+{
+  "image": "C:\\Users\\Admin\\AppData\\Local\\Temp\\tmp4wxdstik\\05_01_0079.png",
+  "mode": "single",
+  "checkpoint": "ml\\checkpoints\\best.pth",
+  "num_classes": 4,
+  "height": 810,
+  "width": 1080,
+  "crs": null,
+  "bounds": {
+    "left": 0.0,
+    "bottom": 810.0,
+    "right": 1080.0,
+    "top": 0.0
+  },
+  "pixel_counts": {
+    "No Damage": 874616,
+    "Minor": 184,
+    "Major": 0,
+    "Destroyed": 0
+  },
+  "damage_pct": {
+    "No Damage": 99.979,
+    "Minor": 0.021,
+    "Major": 0.0,
+    "Destroyed": 0.0
+  }
+}

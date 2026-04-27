@@ -6,6 +6,10 @@ models/*.pt
 weights/*.pt
 weights/*.pth
 
+# ML checkpoints — keep best.pth only, ignore duplicates
+ml/checkpoints/last.pth
+ml/checkpoints_weighted/
+
 # Datasets & Imagery
 data/*.tif
 data/*.tiff
@@ -62,3 +66,20 @@ venv.bak/
 # OS Data
 .DS_Store
 Thumbs.db
+
+# Claude Code local settings
+.claude/
+
+# Logs
+*.log
+backend.log
+
+# Node
+node_modules/
+.next/
+.turbo/
+
+# Env files
+.env
+.env.local
+.env.*.local

@@ -1,0 +1,21 @@
+{
+  "pre": "C:\\Users\\Admin\\AppData\\Local\\Temp\\tmptef5l_8t\\congo-volcano_00000050_pre_disaster.tif",
+  "post": "C:\\Users\\Admin\\AppData\\Local\\Temp\\tmptef5l_8t\\congo-volcano_00000050_post_disaster.tif",
+  "checkpoint": "ml\\checkpoints\\best.pth",
+  "num_classes": 4,
+  "height": 1024,
+  "width": 1024,
+  "crs": "EPSG:4326",
+  "pixel_counts": {
+    "No Damage": 1047854,
+    "Minor": 722,
+    "Major": 0,
+    "Destroyed": 0
+  },
+  "damage_pct": {
+    "No Damage": 99.9311,
+    "Minor": 0.0689,
+    "Major": 0.0,
+    "Destroyed": 0.0
+  }
+}

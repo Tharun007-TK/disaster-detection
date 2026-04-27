@@ -1,0 +1,27 @@
+{
+  "pre": "C:\\Users\\Admin\\AppData\\Local\\Temp\\tmpcw1pj920\\turkey-earthquake_00000270_pre_disaster.tif",
+  "post": "C:\\Users\\Admin\\AppData\\Local\\Temp\\tmpcw1pj920\\turkey-earthquake_00000270_post_disaster.tif",
+  "checkpoint": "ml\\checkpoints\\best.pth",
+  "num_classes": 4,
+  "height": 1024,
+  "width": 1024,
+  "crs": "EPSG:32637",
+  "bounds": {
+    "left": 434827.8760577919,
+    "bottom": 4179444.6367485076,
+    "right": 435142.35294935026,
+    "top": 4179759.113643657
+  },
+  "pixel_counts": {
+    "No Damage": 848230,
+    "Minor": 170989,
+    "Major": 9294,
+    "Destroyed": 20063
+  },
+  "damage_pct": {
+    "No Damage": 80.8935,
+    "Minor": 16.3068,
+    "Major": 0.8863,
+    "Destroyed": 1.9134
+  }
+}

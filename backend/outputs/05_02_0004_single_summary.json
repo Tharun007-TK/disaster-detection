@@ -1,0 +1,27 @@
+{
+  "image": "C:\\Users\\Admin\\AppData\\Local\\Temp\\tmpbwlgl_xq\\05_02_0004.png",
+  "mode": "single",
+  "checkpoint": "ml\\checkpoints\\best.pth",
+  "num_classes": 4,
+  "height": 183,
+  "width": 276,
+  "crs": null,
+  "bounds": {
+    "left": 0.0,
+    "bottom": 183.0,
+    "right": 276.0,
+    "top": 0.0
+  },
+  "pixel_counts": {
+    "No Damage": 50508,
+    "Minor": 0,
+    "Major": 0,
+    "Destroyed": 0
+  },
+  "damage_pct": {
+    "No Damage": 100.0,
+    "Minor": 0.0,
+    "Major": 0.0,
+    "Destroyed": 0.0
+  }
+}

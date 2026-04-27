@@ -1,0 +1,27 @@
+{
+  "image": "C:\\Users\\Admin\\AppData\\Local\\Temp\\tmpf2_x311a\\01_01_0006.png",
+  "mode": "single",
+  "checkpoint": "ml\\checkpoints\\best.pth",
+  "num_classes": 4,
+  "height": 630,
+  "width": 630,
+  "crs": null,
+  "bounds": {
+    "left": 0.0,
+    "bottom": 630.0,
+    "right": 630.0,
+    "top": 0.0
+  },
+  "pixel_counts": {
+    "No Damage": 396900,
+    "Minor": 0,
+    "Major": 0,
+    "Destroyed": 0
+  },
+  "damage_pct": {
+    "No Damage": 100.0,
+    "Minor": 0.0,
+    "Major": 0.0,
+    "Destroyed": 0.0
+  }
+}

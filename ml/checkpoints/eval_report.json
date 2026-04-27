@@ -1,0 +1,70 @@
+{
+  "miou": 0.5583193514233016,
+  "pixel_acc": 0.930777572249241,
+  "per_class": [
+    {
+      "class": 0,
+      "name": "No Damage",
+      "iou": 0.931729,
+      "precision": 0.946117,
+      "recall": 0.983941,
+      "f1": 0.964658,
+      "support_px": 303284069
+    },
+    {
+      "class": 1,
+      "name": "Minor",
+      "iou": 0.574363,
+      "precision": 0.832968,
+      "recall": 0.649126,
+      "f1": 0.729645,
+      "support_px": 44998394
+    },
+    {
+      "class": 2,
+      "name": "Major",
+      "iou": 0.185954,
+      "precision": 0.383006,
+      "recall": 0.26548,
+      "f1": 0.313593,
+      "support_px": 3154664
+    },
+    {
+      "class": 3,
+      "name": "Destroyed",
+      "iou": 0.541232,
+      "precision": 0.85577,
+      "recall": 0.595557,
+      "f1": 0.702337,
+      "support_px": 4030137
+    }
+  ],
+  "confusion_matrix": [
+    [
+      298413640,
+      4288479,
+      372876,
+      209074
+    ],
+    [
+      14940477,
+      29209639,
+      776258,
+      72020
+    ],
+    [
+      1024813,
+      1168923,
+      837500,
+      123428
+    ],
+    [
+      1030031,
+      399913,
+      200015,
+      2400178
+    ]
+  ],
+  "num_val_samples": 339,
+  "checkpoint": "ml/checkpoints/best.pth"
+}
