@@ -1,3 +1,9 @@
+# Azure / cloud credentials — never commit
+azure_creds.json
+azure-creds.json
+*.azureauth
+.azure/
+
 # Segment Anything Model (SAM) weights
 models/*.pth
 models/*.pt
