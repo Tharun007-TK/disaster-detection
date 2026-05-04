@@ -90,3 +90,6 @@ node_modules/
 .env
 .env.local
 .env.*.local
+
+backend/outputs/*
+!backend/outputs/.gitkeep
