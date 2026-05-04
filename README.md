@@ -1,4 +1,27 @@
-# Multimodal Post-Disaster Building Damage Assessment
+# DAMAGESCOPE — Disaster Damage Assessment
+
+> **Full project report:** [docs/PROJECT_REPORT.md](docs/PROJECT_REPORT.md) — dataset, model, deployment to Azure, bug log, and CI/CD.
+>
+> **Note:** the legacy README content below references SAM and Streamlit, both removed from the v2 architecture. See the report for the current Siamese ResNet-18 + FastAPI + Next.js stack.
+
+![Status](https://img.shields.io/badge/Status-Deployed-green)
+![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.136-009688)
+![Next.js](https://img.shields.io/badge/Next.js-16-000000)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.6%20CPU-orange)
+![Azure](https://img.shields.io/badge/Azure-Container%20Apps%20%2B%20SWA-0078D4)
+
+## Live URLs
+
+| Component | URL |
+|-----------|-----|
+| Frontend  | https://black-beach-0144c460f.7.azurestaticapps.net |
+| Backend   | https://damagescope-api.delightfulrock-79f11601.eastus.azurecontainerapps.io |
+| Health    | https://damagescope-api.delightfulrock-79f11601.eastus.azurecontainerapps.io/api/health |
+
+---
+
+## Legacy README (v1, outdated)
 
 ![Damage Assessment System](https://img.shields.io/badge/Status-Prototype-blue) 
 ![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue)

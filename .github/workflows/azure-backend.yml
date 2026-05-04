@@ -47,8 +47,4 @@ jobs:
           imageToBuild: ${{ env.AZURE_ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
           targetPort: 8000
           ingress: external
-          environmentVariables: |
-            MODEL_WEIGHTS_PATH=/app/ml/checkpoints/best.pth
-            OUTPUTS_DIR=/app/backend/outputs
-            EAGER_MODEL_LOAD=0
-            CORS_ORIGINS=https://black-beach-0144c460f.7.azurestaticapps.net
+          environmentVariables: MODEL_WEIGHTS_PATH=/app/ml/checkpoints/best.pth OUTPUTS_DIR=/app/backend/outputs EAGER_MODEL_LOAD=0 CORS_ORIGINS=https://black-beach-0144c460f.7.azurestaticapps.net
