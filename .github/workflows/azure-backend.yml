@@ -34,6 +34,7 @@ jobs:
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+          auth-type: SERVICE_PRINCIPAL
 
       - name: Build and deploy to Container Apps
         uses: azure/container-apps-deploy-action@v2
@@ -50,3 +51,4 @@ jobs:
             MODEL_WEIGHTS_PATH=/app/ml/checkpoints/best.pth
             OUTPUTS_DIR=/app/backend/outputs
             EAGER_MODEL_LOAD=0
+            CORS_ORIGINS=https://black-beach-0144c460f.7.azurestaticapps.net
