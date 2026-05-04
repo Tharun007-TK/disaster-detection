@@ -9,13 +9,15 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
-import albumentations as A
 import numpy as np
 import rasterio
 import torch
 from torch.utils.data import Dataset
+
+if TYPE_CHECKING:
+    import albumentations as A
 
 
 PRE_SUFFIX = "_pre_disaster.tif"
@@ -71,7 +73,8 @@ def _read_geotiff(path: Path) -> np.ndarray:
     return arr
 
 
-def build_train_transform(img_size: int = 512) -> A.Compose:
+def build_train_transform(img_size: int = 512) -> "A.Compose":
+    import albumentations as A  # training-only dep, kept out of runtime image
     return A.Compose(
         [
             A.RandomCrop(height=img_size, width=img_size),
@@ -83,7 +86,8 @@ def build_train_transform(img_size: int = 512) -> A.Compose:
     )
 
 
-def build_val_transform(img_size: int = 1024) -> A.Compose:
+def build_val_transform(img_size: int = 1024) -> "A.Compose":
+    import albumentations as A
     return A.Compose(
         [A.CenterCrop(height=img_size, width=img_size)],
         additional_targets={"post": "image", "mask": "mask"},
