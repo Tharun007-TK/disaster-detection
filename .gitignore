@@ -93,3 +93,4 @@ node_modules/
 
 backend/outputs/*
 !backend/outputs/.gitkeep
+project_details.docx

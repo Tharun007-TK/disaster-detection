@@ -1,15 +1,12 @@
-# DAMAGESCOPE — Disaster Damage Assessment
+# DAMAGESCOPE
 
-> **Full project report:** [docs/PROJECT_REPORT.md](docs/PROJECT_REPORT.md) — dataset, model, deployment to Azure, bug log, and CI/CD.
->
-> **Note:** the legacy README content below references SAM and Streamlit, both removed from the v2 architecture. See the report for the current Siamese ResNet-18 + FastAPI + Next.js stack.
+DAMAGESCOPE detects and classifies building and infrastructure damage by comparing pre-event and post-event satellite GeoTIFF imagery. It produces per-pixel damage masks with four classes: 0 = No Damage, 1 = Minor, 2 = Major, 3 = Destroyed. The v2 stack comprises a Siamese ResNet-18 segmentation model (PyTorch), a FastAPI inference service, and a Next.js dashboard for visualization and uploads.
 
-![Status](https://img.shields.io/badge/Status-Deployed-green)
-![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.136-009688)
+![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.6-orange)
+![FastAPI](https://img.shields.io/badge/FastAPI-stable-009688)
 ![Next.js](https://img.shields.io/badge/Next.js-16-000000)
-![PyTorch](https://img.shields.io/badge/PyTorch-2.6%20CPU-orange)
-![Azure](https://img.shields.io/badge/Azure-Container%20Apps%20%2B%20SWA-0078D4)
+![Azure](https://img.shields.io/badge/Azure-Container%20Apps-0078D4)
 
 ## Live URLs
 
@@ -19,99 +16,168 @@
 | Backend   | https://damagescope-api.delightfulrock-79f11601.eastus.azurecontainerapps.io |
 | Health    | https://damagescope-api.delightfulrock-79f11601.eastus.azurecontainerapps.io/api/health |
 
----
+## Architecture
 
-## Legacy README (v1, outdated)
+- Model: Siamese ResNet-18 (shared encoder weights). Two forward passes (pre/post), fusion via absolute difference |f_pre - f_post|, convolutional segmentation head outputting `[B, 4, H, W]`.
+- Backend: FastAPI service using `rasterio` for GeoTIFF I/O, async inference via `asyncio.to_thread`, configurable eager loading for development.
+- Frontend: Next.js 16 dashboard with Leaflet map overlay, drag-and-drop GeoTIFF upload, and inference result charts.
 
-![Damage Assessment System](https://img.shields.io/badge/Status-Prototype-blue) 
-![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue)
-![Streamlit](https://img.shields.io/badge/Streamlit-1.32%2B-red)
-![PyTorch](https://img.shields.io/badge/PyTorch-CUDA-orange)
+Simple diagram:
 
-A multimodal pipeline designed to assess building damage by combining pre-disaster **Optical (Sentinel-2 L2A)** imagery and post-disaster **SAR (Sentinel-1 GRD)** imagery. The system utilizes Meta's **Segment Anything Model (SAM)** for zero-shot building footprint extraction and a custom ResNet-based dual-encoder network for damage classification.
+```
+pre.tif  --> encoder ---\
+                             diff --> conv head --> mask [B,4,H,W]
+post.tif --> encoder ---/
 
-## ✨ Features
+mask -> served by FastAPI -> visualized on Next.js + Leaflet
+```
 
-- **Multimodal Inference**: Processes multi-band TIFFs (Optical RGB + SAR backscatter).
-- **SAM Segmentation**: Leverages SAM (`vit_b`) to automatically segment building boundaries without requiring pre-trained geographic building footprint models.
-- **Damage Classification**: Classifies structures into four severity levels aligned with the project schema:
-  - `No Damage`
-  - `Minor Damage` 
-  - `Major Damage`
-  - `Destroyed`
-- **Batch Processing**: Rapidly processes entire directories of pre/post/target TIFF pairs, outputting consolidated CSV reports and visual overlays.
-- **Interactive Web UI**: A beautiful, dark-themed Streamlit application enabling single-inference file uploads or massive batch runs with real-time analytics.
+## Dataset
 
----
+This project is trained on the BRIGHT dataset (pre-event optical RGB + post-event SAR GeoTIFF pairs) with pixel-level damage labels.
 
-## 🛠️ Installation & Setup
+Expected dataset layout (local):
 
-### 1. Clone & Environment Setup
-Clone the repository and install the required dependencies inside a virtual environment.
+```
+data/
+  pre-event/    # pre-event GeoTIFFs (e.g. scene_0001.tif)
+  post-event/   # post-event GeoTIFFs with matching filenames
+  target/       # single-band integer GeoTIFF masks (values 0..3)
+```
+
+Notes:
+- Filenames must match between `pre-event/` and `post-event/` to form pairs.
+- Use `rasterio` for reading/writing GeoTIFF to preserve metadata.
+- Spatial augmentations in training must be applied jointly to pre/post/mask.
+
+## Local setup
+
+Requirements: Python 3.11, Node 18+, Docker (for container builds). GPU optional for training.
+
+1. Clone and create a venv
+
 ```bash
-git clone https://github.com/your-username/disaster-damage-assessment.git
-cd disaster-damage-assessment
-
+git clone https://github.com/Tharun007-TK/disaster-detection.git
+cd disaster-detection
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-pip install -r requirements.txt
+venv\Scripts\activate   # Windows
 ```
 
-> **Note**: For Windows users or those processing `.tif` files, the `rasterio` package is strictly required.
+2. Install Python dependencies
 
-### 2. Download SAM Weights
-The pipeline relies on the Segment Anything Model (`vit_b`). Download the checkpoint to the `models/` directory:
 ```bash
-mkdir -p models
-wget https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth -O models/sam_vit_b_01ec64.pth
+pip install -r backend/requirements.txt
+pip install -r ml/requirements.txt
 ```
-*(File size is ~357 MB)*
 
----
+3. Run backend (development)
 
-## 🚀 Usage
-
-You can interact with the pipeline either through the **Command Line Interface (CLI)** or the **Interactive Streamlit Web App**.
-
-### Web Application (Recommended)
-Run the Streamlit application for a full GUI with imagery uploads, prediction overlays, and data tables.
 ```bash
-streamlit run app.py
+cd backend
+# optionally: set EAGER_MODEL_LOAD=1 to force eager load in dev
+set EAGER_MODEL_LOAD=1
+uvicorn main:app --reload --port 8000
 ```
-- Navigate to `http://localhost:8501`.
-- Choose **Single Inference** to upload your own Pre-event `.tif`, Post-event `.tif`, and (optionally) Target mask `.tif`.
-- Choose **Batch Run** to automatically process the dataset in the `data/` folder.
 
-### Command Line / Batch Mode
-You can invoke the backend prototype script directly. Out of the box, it will search the `data/pre-event/` and `data/post-event/` directories to find matching TIF pairs and evaluate them en masse.
+4. Run frontend (Next.js)
+
 ```bash
-python damage_assessment_prototype.py
-```
-Output overlays and CSV reports will be saved to the `outputs/` directory.
-
----
-
-## 📂 Project Structure
-
-```text
-├── app.py                            # Streamlit Web Application
-├── damage_assessment_prototype.py    # Core pipeline & inference logic
-├── requirements.txt                  # Python dependencies
-├── models/                           # Store SAM checkpoints here
-│   └── sam_vit_b_01ec64.pth          
-├── weights/                          # Store trained classifier weights here
-│   └── damage_classifier.pt          
-├── data/                             # Put imagery pairs here
-│   ├── pre-event/
-│   ├── post-event/
-│   └── target/
-└── outputs/                          # Generated predictions & CSVs
+cd frontend
+npm install
+npm run dev
 ```
 
-## 🧠 Model Details
-* **Segmentation Backbone**: Meta SAM (`vit_b`) loaded via `sam_model_registry`. Configured for robust building extraction (`pred_iou_thresh=0.88`, `stability_score_thresh=0.93`).
-* **Damage Classifier**: Dual-branch `ResNet18` encoder. Feeds pre and post-disaster features into a fused Multi-Layer Perceptron (MLP) head to yield a 4-class softmax probability. *(Defaults to untrained ImageNet weights if `weights/damage_classifier.pt` is not present).*
+5. Example inference request
+
+```bash
+curl -X POST "http://localhost:8000/api/inference" -F "pre=@/path/to/pre.tif" -F "post=@/path/to/post.tif"
+```
+
+## ML model & training
+
+Key implementation notes:
+
+- Architecture: Siamese ResNet-18 with shared encoder. Feature fusion via `abs(f_pre - f_post)`, followed by convolutional segmentation head producing 4-class logits.
+- Loss: `CrossEntropyLoss` (multiclass segmentation).
+- Optimizer: `AdamW`.
+- Scheduler: `CosineAnnealing`.
+- Mixed precision: AMP (`torch.cuda.amp`) used during training.
+- Checkpoint: `ml/checkpoints/best.pth` (saved at peak validation IoU, ~49 MB).
+
+Training entrypoint and helpers are under `ml/`.
+
+Run training (example):
+
+```bash
+cd ml
+python train.py --config configs/train.yaml
+```
+
+Hyperparameters (defaults):
+
+| Parameter      | Default |
+|----------------|---------|
+| Loss           | CrossEntropyLoss |
+| Optimizer      | AdamW   |
+| LR             | 1e-4    |
+| Scheduler      | CosineAnnealing |
+| Mixed precision| AMP     |
+| Batch size     | TODO    |
+| Epochs         | TODO    |
+
+## Model metrics
+
+Evaluation summary (placeholders — update after evaluation):
+
+| Metric         | Value |
+|----------------|-------|
+| Pixel Accuracy | TODO  |
+| Mean IoU       | TODO  |
+| Macro F1       | TODO  |
+
+## Backend API
+
+Primary routes (FastAPI):
+
+- `POST /api/inference`            : batch inference endpoint accepting pre/post GeoTIFFs
+- `POST /api/inference/single`     : single-pair inference helper
+- `GET  /api/health`               : health check
+- `GET  /api/results`              : list precomputed outputs in `backend/outputs/`
+- `GET  /api/precautions/{class}`  : returns precaution recommendations for a damage class
+
+Implementation notes:
+
+- GeoTIFF I/O uses `rasterio` to preserve CRS and transforms.
+- Model loading controlled by `MODEL_WEIGHTS_PATH` env var (default `./ml/checkpoints/best.pth`).
+- Async inference uses `asyncio.to_thread` to run CPU/GPU-bound work without blocking the event loop.
+- Docker image is CPU-only and optimized for size (~700 MB).
+
+## Deployment
+
+- Backend: Azure Container Apps (2 CPU / 4 Gi). Frontend: Azure Static Web Apps (Free tier).
+- CI/CD: GitHub Actions workflows under `.github/workflows/` (`azure-backend.yml`, `azure-frontend.yml`).
+- See `docs/PROJECT_REPORT.md` for full deployment steps and architecture diagrams.
+
+## Repository structure
+
+```
+.
+├── ml/
+├── backend/
+│   ├── main.py
+│   ├── routes/
+│   ├── Dockerfile
+│   └── outputs/
+├── frontend/
+├── data/         # pre-event/, post-event/, target/
+├── docs/
+└── .github/workflows/
+```
+
+## Tech stack
+
+Python 3.11, PyTorch 2.6, FastAPI, Next.js 16 (TypeScript), Leaflet, `rasterio`, `albumentations` (training), Docker, Azure Container Apps, Azure Static Web Apps, GitHub Actions.
 
 ## License
+
 MIT License
